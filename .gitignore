@@ -5,11 +5,14 @@
 /classes/
 /target/
 .lein-deps-sum
+.idea
+*.iml
 
 data/*.dmp
 data/*.idx
 data/*.bak
-/target
 log/pid
 log/*.log
 log/*.log*
+
+
