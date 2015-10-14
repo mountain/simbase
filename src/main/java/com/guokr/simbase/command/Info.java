@@ -1,8 +1,8 @@
 package com.guokr.simbase.command;
 
-import com.guokr.simbase.SimEngine;
 import com.guokr.simbase.SimCallback;
 import com.guokr.simbase.SimCommand;
+import com.guokr.simbase.SimEngine;
 
 public class Info extends SimCommand {
 
@@ -13,8 +13,7 @@ public class Info extends SimCommand {
 
     @Override
     public void invoke(SimEngine engine, SimCallback callback) {
-        callback.stringList(engine.info());
-        callback.response();
+        engine.info(callback);
     }
 
 }

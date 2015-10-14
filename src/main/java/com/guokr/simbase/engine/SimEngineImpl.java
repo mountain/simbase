@@ -3,6 +3,7 @@ package com.guokr.simbase.engine;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +40,9 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         BASIS, VECTORS, RECOMM
     };
 
-    private static final Logger logger = LoggerFactory.getLogger(SimEngineImpl.class);
+    private static final Logger logger         = LoggerFactory.getLogger(SimEngineImpl.class);
+
+    private final AtomicInteger commandCounter = new AtomicInteger();
 
     public abstract class AsyncSafeRunner implements Runnable {
         String scope;
@@ -53,6 +57,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         public void run() {
             try {
                 invoke();
+                commandCounter.incrementAndGet();
             } catch (Throwable ex) {
                 logger.error(ex.getMessage(), ex);
             }
@@ -74,6 +79,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         public void run() {
             try {
                 invoke();
+                commandCounter.incrementAndGet();
             } catch (Throwable ex) {
                 String errMsg = ex.getMessage();
                 logger.error(errMsg, ex);
@@ -111,6 +117,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
     private final Map<String, Integer>         counters    = new HashMap<String, Integer>();
     private final int                          bycount;
     private final String                       savePath;
+    private final long                         startTime   = new Date().getTime();
 
     public SimEngineImpl(SimContext simContext) {
         String separator = System.getProperty("file.separator");
@@ -153,7 +160,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         }
     }
 
-    private void validateId(int toCheck) throws SimEngineException {
+    private void validateId(long toCheck) throws SimEngineException {
         if (toCheck < 1) {
             throw new SimEngineException(String.format("Inviad id '%d', should be positive integer", toCheck));
         }
@@ -186,10 +193,6 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         return new StringBuilder().append(vkeySource).append("_").append(vkeyTarget).toString();
     }
 
-    public String[] info() {
-        return new String[] { "version:" + version };
-    }
-
     public void startCron() {
         final int saveInterval = this.context.getInt("saveinterval");
 
@@ -201,6 +204,40 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
             }
         };
         cron.schedule(savetask, saveInterval, saveInterval);
+    }
+
+    @Override
+    @SimCall
+    public void info(final SimCallback callback) {
+        long curTime = new Date().getTime();
+        final long disTime = curTime - startTime;
+
+        Runtime runtime = Runtime.getRuntime();
+        long allocatedMemory = runtime.totalMemory();
+        final String usedMemory = String.valueOf(allocatedMemory);
+
+        List<String> bkeys = new ArrayList<String>(bases.keySet());
+        int tempCount = 0;
+        for (String bkey : bkeys) {
+
+            List<String> vkeys = vectorsOf.get(bkey);
+            if (vkeys != null) {
+                for (String vkey : vkeys) {
+                    tempCount += bases.get(bkey).vlen(vkey);
+                }
+            }
+        }
+        final int keyCount = tempCount;
+
+        mngmExec.execute(new SafeRunner("info", callback) {
+            @Override
+            public void invoke() {
+                String infos = String.format(
+                        "version:%s\nuptime:%s\nused_memory:%s\nvectorKeys:%s\ntotal_command_processed:%s\n", version,
+                        disTime / 1000, usedMemory, keyCount, commandCounter.get());
+                callback.stringValue(infos);
+            }
+        });
     }
 
     @Override
@@ -501,7 +538,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         readerPool.submit(new SafeRunner("vids", callback) {
             @Override
             public void invoke() {
-                callback.integerList(bases.get(bkey).vids(vkey));
+                callback.longList(bases.get(bkey).vids(vkey));
             }
         });
     }
@@ -510,20 +547,25 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall(callback = "F")
-    public void vget(final SimCallback callback, final String vkey, final int vecid) {
+    public void vget(final SimCallback callback, final String vkey, final long vecid) {
         validateKind("vget", vkey, Kind.VECTORS);
         final String bkey = basisOf.get(vkey);
         readerPool.submit(new SafeRunner("vget", callback) {
             @Override
             public void invoke() {
-                callback.floatList(bases.get(bkey).vget(vkey, vecid));
+                float[] result = bases.get(bkey).vget(vkey, vecid);
+                if (result.length == 0) {
+                    callback.nil();
+                } else {
+                    callback.floatList(result);
+                }
             }
         });
     }
 
     @Override
     @SimCall
-    public void vadd(final SimCallback callback, final String vkey, final int vecid, final float[] vector) {
+    public void vadd(final SimCallback callback, final String vkey, final long vecid, final float[] vector) {
         validateKind("vadd", vkey, Kind.VECTORS);
         validateId(vecid);
         final String bkey = basisOf.get(vkey);
@@ -550,7 +592,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall
-    public void vset(final SimCallback callback, final String vkey, final int vecid, final float[] vector) {
+    public void vset(final SimCallback callback, final String vkey, final long vecid, final float[] vector) {
         validateKind("vset", vkey, Kind.VECTORS);
         validateId(vecid);
         final String bkey = basisOf.get(vkey);
@@ -577,7 +619,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall
-    public void vacc(final SimCallback callback, final String vkey, final int vecid, final float[] vector) {
+    public void vacc(final SimCallback callback, final String vkey, final long vecid, final float[] vector) {
         validateKind("vacc", vkey, Kind.VECTORS);
         validateId(vecid);
         final String bkey = basisOf.get(vkey);
@@ -604,7 +646,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall
-    public void vrem(final SimCallback callback, final String vkey, final int vecid) {
+    public void vrem(final SimCallback callback, final String vkey, final long vecid) {
         this.validateKind("vrem", vkey, Kind.VECTORS);
         final String bkey = basisOf.get(vkey);
         writerExecs.get(bkey).execute(new AsyncSafeRunner("vrem") {
@@ -623,7 +665,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
     // Internal use for client-side sparsification
     @Override
     @SimCall(callback = "I")
-    public void iget(final SimCallback callback, final String vkey, final int vecid) {
+    public void iget(final SimCallback callback, final String vkey, final long vecid) {
         validateExistence(vkey);
         final String bkey = basisOf.get(vkey);
         readerPool.submit(new SafeRunner("iget", callback) {
@@ -636,7 +678,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall
-    public void iadd(SimCallback callback, final String vkey, final int vecid, final int[] pairs) {
+    public void iadd(SimCallback callback, final String vkey, final long vecid, final int[] pairs) {
         validateKind("iadd", vkey, Kind.VECTORS);
         validateId(vecid);
         final String bkey = basisOf.get(vkey);
@@ -665,7 +707,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall
-    public void iset(final SimCallback callback, final String vkey, final int vecid, final int[] pairs) {
+    public void iset(final SimCallback callback, final String vkey, final long vecid, final int[] pairs) {
         validateKind("iset", vkey, Kind.VECTORS);
         validateId(vecid);
         final String bkey = basisOf.get(vkey);
@@ -694,7 +736,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall
-    public void iacc(final SimCallback callback, final String vkey, final int vecid, final int[] pairs) {
+    public void iacc(final SimCallback callback, final String vkey, final long vecid, final int[] pairs) {
         this.validateKind("iacc", vkey, Kind.VECTORS);
         validateId(vecid);
         final String bkey = basisOf.get(vkey);
@@ -776,7 +818,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall(callback = "S")
-    public void rget(final SimCallback callback, final String vkeySource, final int vecid, final String vkeyTarget) {
+    public void rget(final SimCallback callback, final String vkeySource, final long vecid, final String vkeyTarget) {
         validateKind("rget", vkeySource, Kind.VECTORS);
         validateKind("rget", vkeyTarget, Kind.VECTORS);
         String rkey = rkey(vkeySource, vkeyTarget);
@@ -792,7 +834,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall(callback = "I")
-    public void rrec(final SimCallback callback, final String vkeySource, final int vecid, final String vkeyTarget) {
+    public void rrec(final SimCallback callback, final String vkeySource, final long vecid, final String vkeyTarget) {
         validateKind("rget", vkeySource, Kind.VECTORS);
         validateKind("rget", vkeyTarget, Kind.VECTORS);
         String rkey = rkey(vkeySource, vkeyTarget);
@@ -801,15 +843,15 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         readerPool.submit(new SafeRunner("rrec", callback) {
             @Override
             public void invoke() {
-                callback.integerList(bases.get(bkey).rrec(vkeySource, vecid, vkeyTarget));
+                callback.longList(bases.get(bkey).rrec(vkeySource, vecid, vkeyTarget));
             }
         });
     }
 
     @Override
     @SimCall
-    public void xacc(SimCallback callback, final String vkeyTarget, final int vecidTarget, final String vkeyOperand,
-            final int vecidOperand) {
+    public void xacc(SimCallback callback, final String vkeyTarget, final long vecidTarget, final String vkeyOperand,
+            final long vecidOperand) {
         validateKind("xacc", vkeyTarget, Kind.VECTORS);
         validateId(vecidTarget);
         validateKind("xacc", vkeyOperand, Kind.VECTORS);
@@ -820,15 +862,17 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
             public void invoke() {
                 SimBasis base = bases.get(bkey);
                 float[] vector = base.vget(vkeyOperand, vecidOperand);
-                base.vacc(vkeyTarget, vecidTarget, vector);
+                if (vector.length != 0) {
+                    base.vacc(vkeyTarget, vecidTarget, vector);
 
-                if (!counters.containsKey(vkeyTarget)) {
-                    counters.put(vkeyTarget, 0);
-                }
-                int counter = counters.get(vkeyTarget) + 1;
-                counters.put(vkeyTarget, counter);
-                if (counter % bycount == 0) {
-                    logger.info(String.format("acculmulating dense vectors %d to %s", counter, vkeyTarget));
+                    if (!counters.containsKey(vkeyTarget)) {
+                        counters.put(vkeyTarget, 0);
+                    }
+                    int counter = counters.get(vkeyTarget) + 1;
+                    counters.put(vkeyTarget, counter);
+                    if (counter % bycount == 0) {
+                        logger.info(String.format("acculmulating dense vectors %d to %s", counter, vkeyTarget));
+                    }
                 }
             }
         });
@@ -839,12 +883,12 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall(callback = "F")
-    public void xprd(final SimCallback callback, final String vkeyTarget, final int vecidTarget,
-            final String vkeyOperand, final int[] vecidOperands) {
+    public void xprd(final SimCallback callback, final String vkeyTarget, final long vecidTarget,
+            final String vkeyOperand, final long[] vecidOperands) {
         validateKind("xprd", vkeyTarget, Kind.VECTORS);
         validateId(vecidTarget);
         validateKind("xprd", vkeyOperand, Kind.VECTORS);
-        for (int vecidOperand : vecidOperands) {
+        for (long vecidOperand : vecidOperands) {
             validateId(vecidOperand);
         }
         final String bkey = basisOf.get(vkeyTarget);
@@ -857,7 +901,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
                 float[] scores = new float[size];
                 float[] target = base.vget(vkeyTarget, vecidTarget);
                 for (int i = 0; i < size; i++) {
-                    int vecidOperand = vecidOperands[i];
+                    long vecidOperand = vecidOperands[i];
                     float[] operand = base.vget(vkeyOperand, vecidOperand);
 
                     int len = target.length;

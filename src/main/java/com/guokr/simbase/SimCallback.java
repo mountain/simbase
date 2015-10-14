@@ -27,6 +27,13 @@ public abstract class SimCallback {
         buffer.put(SimUtils.CRLF);
     }
 
+    public void nil() {
+        buffer = ByteBuffer.allocate(5);
+        buffer.put(SimUtils.DOLLAR);
+        buffer.put(SimUtils.NIL);
+        buffer.put(SimUtils.CRLF);
+    }
+
     public void error(String msg) {
         byte[] bytes = SimUtils.bytes(msg);
         buffer = ByteBuffer.allocate(bytes.length + 3);
@@ -61,6 +68,34 @@ public abstract class SimCallback {
         buffer.put(size);
         buffer.put(SimUtils.CRLF);
         for (int val : list) {
+            byte[] bytes = SimUtils.bytes(val);
+            size = SimUtils.size(bytes);
+            buffer.put(SimUtils.DOLLAR);
+            buffer.put(size);
+            buffer.put(SimUtils.CRLF);
+            buffer.put(bytes);
+            buffer.put(SimUtils.CRLF);
+        }
+    }
+
+    public void longValue(int val) {
+        byte[] bytes = SimUtils.bytes(val);
+        byte[] size = SimUtils.size(bytes);
+        buffer = ByteBuffer.allocate(bytes.length + size.length + 5);
+        buffer.put(SimUtils.DOLLAR);
+        buffer.put(size);
+        buffer.put(SimUtils.CRLF);
+        buffer.put(bytes);
+        buffer.put(SimUtils.CRLF);
+    }
+
+    public void longList(long[] list) {
+        byte[] size = SimUtils.size(list.length);
+        buffer = ByteBuffer.allocate(1024 * list.length + 1024);
+        buffer.put(SimUtils.STAR);
+        buffer.put(size);
+        buffer.put(SimUtils.CRLF);
+        for (long val : list) {
             byte[] bytes = SimUtils.bytes(val);
             size = SimUtils.size(bytes);
             buffer.put(SimUtils.DOLLAR);

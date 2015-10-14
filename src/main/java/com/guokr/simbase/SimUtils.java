@@ -24,6 +24,7 @@ public class SimUtils {
     public static final byte[]  CRLF   = new byte[] { CR, LF };  // '\r\n'
     public static final byte[]  SPACE  = new byte[] { SP };      // '\r\n'
     public static final byte[]  OK     = new byte[] { 'O', 'K' };
+    public static final byte[]  NIL    = new byte[] { '-', '1' };
 
     public static final int     ZERO   = '0';
 
@@ -59,6 +60,10 @@ public class SimUtils {
     }
 
     public static byte[] bytes(int val) {
+        return String.format("%d", val).getBytes(UTF_8);
+    }
+
+    public static byte[] bytes(long val) {
         return String.format("%d", val).getBytes(UTF_8);
     }
 
