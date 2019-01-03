@@ -8,12 +8,12 @@
             :distribution :repo
             :comments "same as Clojure"}
 
-    :dependencies [[org.clojure/clojure "1.7.0"]
-                   [org.yaml/snakeyaml "1.16"]
+    :dependencies [[org.clojure/clojure "1.10.0"]
+                   [org.yaml/snakeyaml "1.21"]
                    [clj-pid "0.1.2"]
                    [net.sf.trove4j/trove4j "3.0.3"]
-                   [org.slf4j/slf4j-api "1.7.12"]
-                   [org.slf4j/slf4j-log4j12 "1.7.12"]
+                   [org.slf4j/slf4j-api "1.7.25"]
+                   [org.slf4j/slf4j-log4j12 "1.7.25"]
                    [log4j/log4j "1.2.17"]
                    [com.esotericsoftware.kryo/kryo "2.24.0"]
                    [junit "4.12" :scope "test"]]
