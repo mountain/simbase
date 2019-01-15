@@ -150,6 +150,15 @@ public class TestEngine {
         };
     }
 
+    public static TestableCallback empty(final long... args) {
+        return new TestableCallback() {
+            @Override
+            public void excepted() {
+                isEmpty(args);
+            }
+        };
+    }
+
     public static Testable ping() {
         return null;
     }

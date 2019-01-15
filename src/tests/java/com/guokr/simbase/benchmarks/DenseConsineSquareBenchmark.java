@@ -58,7 +58,7 @@ public class DenseConsineSquareBenchmark {
         }
 
         start = new Date().getTime();
-        for (int i = 1; i <= 10000; i++) {
+        for (int i = 1; i <= 300000; i++) {
 
             float total = 0;
             float[] distr = new float[1024];
@@ -84,7 +84,7 @@ public class DenseConsineSquareBenchmark {
             if (counter % 1000 == 0) {
                 long duration = new Date().getTime() - start;
                 System.out.println("vecid:" + counter + "\tmemory:" + Runtime.getRuntime().totalMemory() + "\ttime:"
-                        + (duration / 1000));
+                        + (duration / 1000.0));
                 start = new Date().getTime();
             }
             counter++;

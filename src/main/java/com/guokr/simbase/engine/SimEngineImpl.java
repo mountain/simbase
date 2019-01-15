@@ -193,8 +193,27 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         return new StringBuilder().append(vkeySource).append("_").append(vkeyTarget).toString();
     }
 
+    private void expireCheck(long now) {
+        mngmExec.execute(new AsyncSafeRunner("expireCheck") {
+            @Override
+            public void invoke() {
+                List<String> bkeys = new ArrayList<String>(bases.keySet());
+                for (int i = 0; i < bkeys.size(); i++) {
+                    String bkey = bkeys.get(i);
+                    logger.info(String.format("checking expire of basis[%s]", bkey));
+                    List<String> vkeys = vectorsOf.get(bkey);
+                    for (String vkey: vkeys) {
+                        bases.get(bkey).expire(vkey);
+                    }
+                    logger.info(String.format("basis[%s] checked", bkey));
+                }
+            }
+        });
+    }
+
     public void startCron() {
         final int saveInterval = this.context.getInt("saveinterval");
+        final int exInterval = this.context.getInt("expireinterval");
 
         Timer cron = new Timer();
 
@@ -204,6 +223,13 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
             }
         };
         cron.schedule(savetask, saveInterval, saveInterval);
+
+        TimerTask extask = new TimerTask() {
+            public void run() {
+                expireCheck(new Date().getTime());
+            }
+        };
+        cron.schedule(extask, exInterval, exInterval);
     }
 
     @Override
@@ -600,6 +626,33 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
             @Override
             public void invoke() {
                 bases.get(bkey).vset(vkey, vecid, vector);
+
+                if (!counters.containsKey(vkey)) {
+                    counters.put(vkey, 0);
+                }
+                int counter = counters.get(vkey) + 1;
+                counters.put(vkey, counter);
+                if (counter % bycount == 0) {
+                    logger.info(String.format("setting dense vectors %d to %s", counter, vkey));
+                }
+                logger.info(String.format("vector[%s] setted to vectorset[%s]", vecid, vkey));
+            }
+        });
+
+        callback.ok();
+        callback.response();
+    }
+
+    @Override
+    @SimCall
+    public void vsetex(final SimCallback callback, final String vkey, final long vecid, final long ttl, final float[] vector) {
+        validateKind("vset", vkey, Kind.VECTORS);
+        validateId(vecid);
+        final String bkey = basisOf.get(vkey);
+        writerExecs.get(bkey).execute(new AsyncSafeRunner("vset") {
+            @Override
+            public void invoke() {
+                bases.get(bkey).vsetex(vkey, vecid, ttl, vector);
 
                 if (!counters.containsKey(vkey)) {
                     counters.put(vkey, 0);

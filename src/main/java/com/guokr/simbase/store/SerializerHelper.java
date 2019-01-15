@@ -5,6 +5,7 @@ import gnu.trove.iterator.TLongObjectIterator;
 import gnu.trove.map.TLongIntMap;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -75,6 +76,15 @@ public class SerializerHelper {
                 sizeData--;
             }
 
+            int sizeEx = kryo.readObject(input, int.class);
+            while (sizeEx > 0) {
+                long id = kryo.readObject(input, long.class);
+                long ex = kryo.readObject(input, long.class);
+
+                vectorSet.expireAt(id, ex);
+                sizeEx--;
+            }
+
             return vectorSet;
         }
 
@@ -102,6 +112,16 @@ public class SerializerHelper {
             for (int offset = 0; offset < size; offset++) {
                 float val = vectorSet.data.get(offset);
                 kryo.writeObject(output, val);
+            }
+
+            size = vectorSet.expireTimes.size();
+            kryo.writeObject(output, size);
+            Iterator<Long> iterEx = vectorSet.expireTimes.keySet().iterator();
+            for (int offset = 0; offset < size; offset++) {
+                long vecid = iterEx.next();
+                long expireTime = vectorSet.expireTimes.get(vecid);
+                kryo.writeObject(output, vecid);
+                kryo.writeObject(output, expireTime);
             }
         }
 
@@ -142,6 +162,15 @@ public class SerializerHelper {
                 sizeData--;
             }
 
+            int sizeEx = kryo.readObject(input, int.class);
+            while (sizeEx > 0) {
+                long id = kryo.readObject(input, long.class);
+                long ex = kryo.readObject(input, long.class);
+
+                vectorSet.expireAt(id, ex);
+                sizeEx--;
+            }
+
             return vectorSet;
         }
 
@@ -169,6 +198,16 @@ public class SerializerHelper {
             for (int offset = 0; offset < size; offset++) {
                 float val = vectorSet.data.get(offset);
                 kryo.writeObject(output, val);
+            }
+
+            size = vectorSet.expireTimes.size();
+            kryo.writeObject(output, size);
+            Iterator<Long> iterEx = vectorSet.expireTimes.keySet().iterator();
+            for (int offset = 0; offset < size; offset++) {
+                long vecid = iterEx.next();
+                long expireTime = vectorSet.expireTimes.get(vecid);
+                kryo.writeObject(output, vecid);
+                kryo.writeObject(output, expireTime);
             }
         }
     }

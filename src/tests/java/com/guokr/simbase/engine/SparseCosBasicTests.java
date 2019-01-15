@@ -48,6 +48,7 @@ public class SparseCosBasicTests {
         basis.put("maxlimits", 20);
         econf.put("savepath", "data");
         econf.put("saveinterval", 7200000);
+        econf.put("expireinterval", 60000);
         econf.put("loadfactor", 0.75);
         econf.put("bycount", 100);
         defaults.put("sparse", sparse);

@@ -6,9 +6,7 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.hash.TLongIntHashMap;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import com.guokr.simbase.events.BasisListener;
 import com.guokr.simbase.events.VectorSetListener;
@@ -30,6 +28,9 @@ public class DenseVectorSet implements VectorSet, BasisListener {
 
     private boolean                 listening = true;
     private List<VectorSetListener> listeners = new ArrayList<VectorSetListener>();
+
+    Map<Long, Long> expireTimes = new HashMap<Long, Long>();
+    SortedMap<Long, List<Long>> expireBuckets = new TreeMap<Long, List<Long>>();
 
     private int[]                   iReuseList;
     private float[]                 fReuseList;
@@ -92,6 +93,17 @@ public class DenseVectorSet implements VectorSet, BasisListener {
                 cursor++;
             }
         }
+
+        Map<Long, Long> oldex = expireTimes;
+        expireTimes = new HashMap<Long, Long>();
+        expireBuckets = new TreeMap<Long, List<Long>>();
+        Iterator<Long> ids = oldex.keySet().iterator();
+        while (ids.hasNext()) {
+            long id = ids.next();
+            if(contains(id)) {
+                expireAt(id, oldex.get(id));
+            }
+        }
     }
 
     @Override
@@ -100,10 +112,42 @@ public class DenseVectorSet implements VectorSet, BasisListener {
     }
 
     @Override
+    public long[] expired() {
+        List<Long> ids = new ArrayList<Long>();
+        SortedMap<Long, List<Long>> buckets = expireBuckets.subMap(0l, new Date().getTime());
+        Iterator<Long> iter = buckets.keySet().iterator();
+        for (long key = buckets.firstKey(); iter.hasNext(); key = iter.next()) {
+            ids.addAll(buckets.get(key));
+        }
+
+        long[] result = new long[ids.size()];
+        for(int i = 0; i < ids.size(); i++) {
+            result[i] = ids.get(i);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void expireAll() {
+        for(long vecid: expired()) {
+            remove(vecid);
+        }
+    }
+
+    @Override
     public void remove(long vecid) {
         if (indexer.containsKey(vecid)) {
             indexer.remove(vecid);
             lengths.remove(vecid);
+
+            Long expireTime = expireTimes.remove(vecid);
+            if (expireTime != null) {
+                List<Long> bucket = expireBuckets.get(expireTime);
+                if (bucket != null) {
+                    bucket.remove(vecid);
+                }
+            }
 
             if (listening) {
                 for (VectorSetListener l : listeners) {
@@ -116,6 +160,17 @@ public class DenseVectorSet implements VectorSet, BasisListener {
     @Override
     public int length(long vecid) {
         return lengths.get(vecid);
+    }
+
+    @Override
+    public void expireAt(long vecid, long expireTime) {
+        expireTimes.put(vecid, expireTime);
+        List<Long> bucket = expireBuckets.get(expireTime);
+        if (bucket == null) {
+            bucket = new ArrayList<Long>();
+            expireBuckets.put(expireTime, bucket);
+        }
+        bucket.add(vecid);
     }
 
     protected void get(long vecid, float[] result) {

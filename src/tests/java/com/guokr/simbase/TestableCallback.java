@@ -166,6 +166,12 @@ public abstract class TestableCallback extends SimCallback {
         }
     }
 
+    public void isEmpty(long[] list) {
+        excepted = ByteBuffer.allocate(1024);
+        excepted.put(SimUtils.STAR);
+        excepted.put(SimUtils.size(0));
+    }
+
     public void waitForFinish() {
         try {
             Thread.sleep(250);

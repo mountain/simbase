@@ -48,6 +48,7 @@ public class GeneralTests {
         basis.put("maxlimits", 3);
         econf.put("savepath", "data");
         econf.put("saveinterval", 7200000);
+        econf.put("expireinterval", 60000);
         econf.put("loadfactor", 0.75);
         econf.put("bycount", 100);
         defaults.put("sparse", sparse);

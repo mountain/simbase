@@ -42,6 +42,8 @@ public interface SimEngine {
 
     public void vset(SimCallback callback, String vkey, long vecid, float[] vector);
 
+    public void vsetex(SimCallback callback, String vkey, long vecid, long expireTime, float[] distr);
+
     public void vacc(SimCallback callback, String vkey, long vecid, float[] vector);
 
     public void vrem(SimCallback callback, String vkey, long vecid);
@@ -71,5 +73,4 @@ public interface SimEngine {
     public void listen(String vkey, VectorSetListener listener);
 
     public void listen(String srcVkey, String tgtVkey, RecommendationListener listener);
-
 }

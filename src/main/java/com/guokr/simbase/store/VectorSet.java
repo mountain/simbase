@@ -14,11 +14,17 @@ public interface VectorSet {
 
     public long[] ids();
 
+    public long[] expired();
+
     public boolean contains(long vecid);
 
     public void remove(long vecid);
 
     public float[] get(long vecid);
+
+    public void expireAt(long vecid, long expireTime);
+
+    public void expireAll();
 
     public void add(long vecid, float[] vector);
 
@@ -41,5 +47,4 @@ public interface VectorSet {
     public void rescore(String key, long vecid, float[] vector, Recommendation rec);
 
     public void rescore(String key, long vecid, int[] vector, Recommendation rec);
-
 }

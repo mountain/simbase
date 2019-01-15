@@ -2,10 +2,7 @@ package com.guokr.simbase.engine;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -159,6 +156,11 @@ public class SimBasis {
         this.vectorSets.get(vkey).set(vecid, distr);
     }
 
+    public void vsetex(String vkey, long vecid, long ttl, float[] distr) {
+        this.vectorSets.get(vkey).set(vecid, distr);
+        this.vectorSets.get(vkey).expireAt(vecid, ttl * 1000 + new Date().getTime());
+    }
+
     public void vacc(String vkey, long vecid, float[] distr) {
         this.vectorSets.get(vkey).accumulate(vecid, distr);
     }
@@ -236,6 +238,10 @@ public class SimBasis {
         return this.recommendations.get(rkey(vkeySource, vkeyTarget)).rec(vecid);
     }
 
+    public void expire(String vkey) {
+        this.vectorSets.get(vkey).expireAll();
+    }
+
     public void addListener(SimBasisListener listener) {
         listeners.add(listener);
     }
@@ -251,5 +257,4 @@ public class SimBasis {
     public void addListener(String srcVkey, String tgtVkey, RecommendationListener listener) {
         recommendations.get(rkey(srcVkey, tgtVkey)).addListener(listener);
     }
-
 }
