@@ -152,6 +152,11 @@ public class SimBasis {
         this.vectorSets.get(vkey).add(vecid, distr);
     }
 
+    public void vaddex(String vkey, long vecid, long ttl, float[] distr) {
+        this.vectorSets.get(vkey).add(vecid, distr);
+        this.vectorSets.get(vkey).expireAt(vecid, ttl * 1000 + new Date().getTime());
+    }
+
     public void vset(String vkey, long vecid, float[] distr) {
         this.vectorSets.get(vkey).set(vecid, distr);
     }

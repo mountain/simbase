@@ -40,6 +40,8 @@ public interface SimEngine {
 
     public void vadd(SimCallback callback, String vkey, long vecid, float[] vector);
 
+    public void vaddex(SimCallback callback, String vkey, long vecid, long ttl, float[] distr);
+
     public void vset(SimCallback callback, String vkey, long vecid, float[] vector);
 
     public void vsetex(SimCallback callback, String vkey, long vecid, long expireTime, float[] distr);

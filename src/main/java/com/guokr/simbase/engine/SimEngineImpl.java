@@ -618,6 +618,33 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     @Override
     @SimCall
+    public void vaddex(final SimCallback callback, final String vkey, final long vecid, final long ttl, final float[] vector) {
+        validateKind("vaddex", vkey, Kind.VECTORS);
+        validateId(vecid);
+        final String bkey = basisOf.get(vkey);
+        writerExecs.get(bkey).execute(new AsyncSafeRunner("vset") {
+            @Override
+            public void invoke() {
+                bases.get(bkey).vaddex(vkey, vecid, ttl, vector);
+
+                if (!counters.containsKey(vkey)) {
+                    counters.put(vkey, 0);
+                }
+                int counter = counters.get(vkey) + 1;
+                counters.put(vkey, counter);
+                if (counter % bycount == 0) {
+                    logger.info(String.format("adding dense vectors %d to %s", counter, vkey));
+                }
+                logger.info(String.format("vector[%s] added to vectorset[%s]", vecid, vkey));
+            }
+        });
+
+        callback.ok();
+        callback.response();
+    }
+
+    @Override
+    @SimCall
     public void vset(final SimCallback callback, final String vkey, final long vecid, final float[] vector) {
         validateKind("vset", vkey, Kind.VECTORS);
         validateId(vecid);
@@ -646,7 +673,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
     @Override
     @SimCall
     public void vsetex(final SimCallback callback, final String vkey, final long vecid, final long ttl, final float[] vector) {
-        validateKind("vset", vkey, Kind.VECTORS);
+        validateKind("vsetex", vkey, Kind.VECTORS);
         validateId(vecid);
         final String bkey = basisOf.get(vkey);
         writerExecs.get(bkey).execute(new AsyncSafeRunner("vset") {
