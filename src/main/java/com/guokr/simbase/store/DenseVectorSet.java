@@ -116,8 +116,11 @@ public class DenseVectorSet implements VectorSet, BasisListener {
         List<Long> ids = new ArrayList<Long>();
         SortedMap<Long, List<Long>> buckets = expireBuckets.subMap(0l, new Date().getTime());
         Iterator<Long> iter = buckets.keySet().iterator();
-        for (long key = buckets.firstKey(); iter.hasNext(); key = iter.next()) {
-            ids.addAll(buckets.get(key));
+        while (iter.hasNext()) {
+            Long key = iter.next();
+            if (key != null) {
+                ids.addAll(buckets.get(key));
+            }
         }
 
         long[] result = new long[ids.size()];
