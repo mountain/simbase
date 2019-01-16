@@ -45,10 +45,18 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
     private final AtomicInteger commandCounter = new AtomicInteger();
 
     public abstract class AsyncSafeRunner implements Runnable {
+        Map<String, String> ctx = new HashMap<String, String>();
         String scope;
 
-        public AsyncSafeRunner(String scope) {
+        public AsyncSafeRunner(String scope, Map<String, String> context) {
             this.scope = scope;
+            if(context != null) {
+                this.ctx.putAll(context);
+            }
+        }
+
+        public AsyncSafeRunner(String scope) {
+            this(scope, null);
         }
 
         public abstract void invoke();
@@ -200,12 +208,20 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
                 List<String> bkeys = new ArrayList<String>(bases.keySet());
                 for (int i = 0; i < bkeys.size(); i++) {
                     String bkey = bkeys.get(i);
-                    logger.info(String.format("checking expire of basis[%s]", bkey));
-                    List<String> vkeys = vectorsOf.get(bkey);
-                    for (String vkey: vkeys) {
-                        bases.get(bkey).expire(vkey);
-                    }
-                    logger.info(String.format("basis[%s] checked", bkey));
+                    Map<String, String> ctx = new HashMap<String, String>();
+                    ctx.put("bkey", bkey);
+                    writerExecs.get(bkey).execute(new AsyncSafeRunner("expireCheckOnBasis", ctx) {
+                        @Override
+                        public void invoke() {
+                            String bkey = this.ctx.get("bkey");
+                            logger.info(String.format("checking expire of basis[%s]", bkey));
+                            List<String> vkeys = vectorsOf.get(bkey);
+                            for (String vkey : vkeys) {
+                                bases.get(bkey).expire(vkey);
+                            }
+                            logger.info(String.format("basis[%s] checked", bkey));
+                        }
+                    });
                 }
             }
         });
