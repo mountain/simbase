@@ -83,12 +83,14 @@ public class SimBasis {
         try {
             input = new Input(new FileInputStream(filepath));
             SerializerHelper serializerHelper = helper.get();
-            Basis base = serializerHelper.readB(input);
-            Map<String, VectorSet> vecSets = serializerHelper.readVectorSets(input, base);
-            Map<String, Recommendation> recs = serializerHelper.readRecommendations(input, vecSets);
 
+            Basis base = serializerHelper.readB(input);
             this.base = base;
+
+            Map<String, VectorSet> vecSets = serializerHelper.readVectorSets(input, base);
             this.vectorSets = vecSets;
+
+            Map<String, Recommendation> recs = serializerHelper.readRecommendations(input, vecSets);
             this.recommendations = recs;
 
             for (String vkey : vecSets.keySet()) {
