@@ -108,6 +108,9 @@ public class ServerHandler implements IHandler {
                             } else if (sig.equals("lsL")) {
                                 command.invoke(engine, request.args(1), request.argl(2), request.args(3),
                                         request.argL(4), callback);
+                            } else if (sig.equals("llF")) {
+                                command.invoke(engine, request.args(1), request.argl(2), request.argl(3),
+                                        request.argF(4), callback);
                             }
                             break;
                         }
