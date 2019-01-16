@@ -15,6 +15,7 @@ public class PrefixThreadFactory implements ThreadFactory {
         int i = id.incrementAndGet();
         Thread t = new Thread(r, prefix + i);
         t.setDaemon(true);
+        t.setPriority(Thread.NORM_PRIORITY + 1);
         return t;
     }
 }

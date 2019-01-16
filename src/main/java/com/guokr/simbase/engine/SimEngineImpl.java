@@ -109,7 +109,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
     private SimContext                         context;
 
-    private final ExecutorService              mngmExec    = Executors.newSingleThreadExecutor();
+    private final ExecutorService              mngmExec    = Executors.newSingleThreadExecutor(new PrefixThreadFactory("management"));
     private final Map<String, Kind>            kindOf      = new HashMap<String, Kind>();
     private final Map<String, String>          basisOf     = new HashMap<String, String>();
     private final Map<String, List<String>>    vectorsOf   = new HashMap<String, List<String>>();
@@ -409,7 +409,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
 
                 simBasis.bload(filePath);
 
-                writerExecs.put(bkey, Executors.newSingleThreadExecutor());
+                writerExecs.put(bkey, Executors.newSingleThreadExecutor(new PrefixThreadFactory(String.format("writer[%s]", bkey))));
 
                 logger.info(String.format("basis[%s] loaded", bkey));
             }
@@ -471,7 +471,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
                 kindOf.put(bkey, Kind.BASIS);
                 simbasis.addListener(SimEngineImpl.this);
 
-                writerExecs.put(bkey, Executors.newSingleThreadExecutor());
+                writerExecs.put(bkey, Executors.newSingleThreadExecutor(new PrefixThreadFactory(String.format("writer[%s]", bkey))));
 
                 logger.info(String.format("basis[%s] created", bkey));
 
