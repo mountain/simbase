@@ -4,6 +4,7 @@ import gnu.trove.iterator.TLongIntIterator;
 import gnu.trove.iterator.TLongObjectIterator;
 import gnu.trove.map.TLongIntMap;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,15 +30,38 @@ public class SerializerHelper {
 
         @Override
         public Basis read(Kryo kryo, Input input, Class<Basis> type) {
+            logger.info(String.format("reading basis...."));
+
             String key = kryo.readObject(input, String.class);
+            logger.info(String.format("reading basis[%s]", key));
+
             String[] schema = kryo.readObject(input, String[].class);
+            StringBuilder schemaStr = new StringBuilder();
+            for (String s: schema) {
+                schemaStr.append(s);
+                schemaStr.append(", ");
+            }
+            logger.info(String.format("basis[%s] schema", schemaStr));
+
             return new Basis(key, schema);
         }
 
         @Override
         public void write(Kryo kryo, Output output, Basis basis) {
-            kryo.writeObject(output, basis.key());
-            kryo.writeObject(output, basis.get());
+            logger.info(String.format("writing basis...."));
+
+            String key = basis.key();
+            logger.info(String.format("writing basis[%s]", key));
+            kryo.writeObject(output, key);
+
+            String[] schema = basis.get();
+            StringBuilder schemaStr = new StringBuilder();
+            for (String s: schema) {
+                schemaStr.append(s);
+                schemaStr.append(", ");
+            }
+            logger.info(String.format("basis[%s] schema", schemaStr));
+            kryo.writeObject(output, schema);
         }
 
     }
@@ -52,11 +76,18 @@ public class SerializerHelper {
 
         @Override
         public DenseVectorSet read(Kryo kryo, Input input, Class<DenseVectorSet> type) {
+            logger.info(String.format("reading vectorset...."));
+
             String key = kryo.readObject(input, String.class);
+            logger.info(String.format("reading vectorset[%s]", key));
+
             float accumuFactor = kryo.readObject(input, float.class);
             int sparseFactor = kryo.readObject(input, int.class);
             DenseVectorSet vectorSet = new DenseVectorSet(key, basis, accumuFactor, sparseFactor);
+
             int sizeVector = kryo.readObject(input, int.class);
+            logger.info(String.format("reading vectorset[%s] structure with %d elements", key, sizeVector));
+
             int vecid, start, length;
             while (sizeVector > 0) {
                 vecid = kryo.readObject(input, int.class);
@@ -69,6 +100,8 @@ public class SerializerHelper {
             }
 
             int sizeData = kryo.readObject(input, int.class);
+            logger.info(String.format("reading vectorset[%s] data with %d elements", key, sizeData));
+
             while (sizeData > 0) {
                 float val = kryo.readObject(input, float.class);
 
@@ -77,6 +110,8 @@ public class SerializerHelper {
             }
 
             int sizeEx = kryo.readObject(input, int.class);
+            logger.info(String.format("reading vectorset[%s] expire info with %d elements", key, sizeEx));
+
             while (sizeEx > 0) {
                 long id = kryo.readObject(input, long.class);
                 long ex = kryo.readObject(input, long.class);
@@ -90,13 +125,20 @@ public class SerializerHelper {
 
         @Override
         public void write(Kryo kryo, Output output, DenseVectorSet vectorSet) {
-            output.writeString(vectorSet.key());
+            logger.info(String.format("writing vectorset...."));
+            String key = vectorSet.key();
+            output.writeString(key);
+            logger.info(String.format("writing vectorset[%s]", key));
+
             kryo.writeObject(output, vectorSet.accumuFactor);
             kryo.writeObject(output, vectorSet.sparseFactor);
 
             TLongIntMap indexer = vectorSet.indexer;
             TLongIntIterator iter = indexer.iterator();
-            kryo.writeObject(output, indexer.size());
+
+            int sizeData = indexer.size();
+            kryo.writeObject(output, sizeData);
+            logger.info(String.format("writing vectorset[%s] structure with %d elements", key, sizeData));
             while (iter.hasNext()) {
                 iter.advance();
                 long vecid = iter.key();
@@ -108,6 +150,7 @@ public class SerializerHelper {
             }
 
             int size = vectorSet.data.size();
+            logger.info(String.format("writing vectorset[%s] data with %d elements", key, size));
             kryo.writeObject(output, size);
             for (int offset = 0; offset < size; offset++) {
                 float val = vectorSet.data.get(offset);
@@ -115,6 +158,7 @@ public class SerializerHelper {
             }
 
             size = vectorSet.expireTimes.size();
+            logger.info(String.format("writing vectorset[%s] expire info with %d elements", key, size));
             kryo.writeObject(output, size);
             Iterator<Long> iterEx = vectorSet.expireTimes.keySet().iterator();
             for (int offset = 0; offset < size; offset++) {

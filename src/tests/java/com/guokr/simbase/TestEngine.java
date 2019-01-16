@@ -204,6 +204,11 @@ public class TestEngine {
             @Override
             public void test(TestableCallback cb) {
                 engine.bload(cb, key);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         };
     }
