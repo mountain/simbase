@@ -23,6 +23,8 @@ import com.guokr.simbase.store.Recommendation;
 import com.guokr.simbase.store.SerializerHelper;
 import com.guokr.simbase.store.SparseVectorSet;
 import com.guokr.simbase.store.VectorSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SimBasis {
 
@@ -31,6 +33,8 @@ public class SimBasis {
     private Map<String, VectorSet>        vectorSets      = new HashMap<String, VectorSet>();
     private Map<String, Recommendation>   recommendations = new HashMap<String, Recommendation>();
     private List<SimBasisListener>        listeners       = new ArrayList<SimBasisListener>();
+
+    private static final Logger logger         = LoggerFactory.getLogger(SimEngineImpl.class);
 
     private ThreadLocal<SerializerHelper> helper          = new ThreadLocal<SerializerHelper>() {
                                                               @Override
@@ -65,6 +69,7 @@ public class SimBasis {
             serializerHelper.writeVectorSets(output, this.vectorSets);
             serializerHelper.writeRecommendations(output, this.recommendations);
         } catch (Throwable e) {
+            logger.error("bsave", e);
             throw new SimException(e);
         } finally {
             if (output != null) {
@@ -101,6 +106,7 @@ public class SimBasis {
             }
 
         } catch (Throwable e) {
+            logger.error("bload", e);
             throw new SimException(e);
         } finally {
             if (input != null) {

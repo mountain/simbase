@@ -136,6 +136,7 @@ public class DenseVectorSet implements VectorSet, BasisListener {
         for(long vecid: expired()) {
             remove(vecid);
         }
+        clean();
     }
 
     @Override
