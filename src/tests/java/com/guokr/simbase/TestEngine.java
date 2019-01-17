@@ -478,7 +478,7 @@ public class TestEngine {
     }
 
     public static Testable xacc(final String vkeyTarget, final long vecidTarget, final String vkeyOperand,
-            final long vecidOperand) {
+            final long[] vecidOperand) {
         return new Testable() {
             @Override
             public void test(TestableCallback cb) {

@@ -722,7 +722,7 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
         writerExecs.get(bkey).execute(new AsyncSafeRunner("vacc") {
             @Override
             public void invoke() {
-                bases.get(bkey).vacc(vkey, vecid, vector);
+                bases.get(bkey).vacc(vkey, vecid, vector, true);
 
                 if (!counters.containsKey(vkey)) {
                     counters.put(vkey, 0);
@@ -947,28 +947,39 @@ public class SimEngineImpl implements SimEngine, SimBasisListener {
     @Override
     @SimCall
     public void xacc(SimCallback callback, final String vkeyTarget, final long vecidTarget, final String vkeyOperand,
-            final long vecidOperand) {
+            final long[] vecidOperand) {
         validateKind("xacc", vkeyTarget, Kind.VECTORS);
         validateId(vecidTarget);
         validateKind("xacc", vkeyOperand, Kind.VECTORS);
-        validateId(vecidOperand);
+        for (long vecid: vecidOperand) {
+            validateId(vecid);
+        }
         final String bkey = basisOf.get(vkeyTarget);
         writerExecs.get(bkey).execute(new AsyncSafeRunner("xacc") {
             @Override
             public void invoke() {
+                int cnt = 0;
                 SimBasis base = bases.get(bkey);
-                float[] vector = base.vget(vkeyOperand, vecidOperand);
-                if (vector.length != 0) {
-                    base.vacc(vkeyTarget, vecidTarget, vector);
+                for (long vecid: vecidOperand) {
+                    cnt++;
+                    float[] vector = base.vget(vkeyOperand, vecid);
+                    if (vector.length != 0) {
+                        if (cnt == vecidOperand.length) {
+                            base.vacc(vkeyTarget, vecidTarget, vector, true);
+                        } else {
+                            base.vacc(vkeyTarget, vecidTarget, vector, false);
+                        }
 
-                    if (!counters.containsKey(vkeyTarget)) {
-                        counters.put(vkeyTarget, 0);
+                        if (!counters.containsKey(vkeyTarget)) {
+                            counters.put(vkeyTarget, 0);
+                        }
+                        int counter = counters.get(vkeyTarget) + 1;
+                        counters.put(vkeyTarget, counter);
+                        if (counter % bycount == 0) {
+                            logger.info(String.format("acculmulating dense vectors %d to %s", counter, vkeyTarget));
+                        }
                     }
-                    int counter = counters.get(vkeyTarget) + 1;
-                    counters.put(vkeyTarget, counter);
-                    if (counter % bycount == 0) {
-                        logger.info(String.format("acculmulating dense vectors %d to %s", counter, vkeyTarget));
-                    }
+
                 }
             }
         });

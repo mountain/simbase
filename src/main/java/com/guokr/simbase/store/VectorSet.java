@@ -42,6 +42,10 @@ public interface VectorSet {
 
     void _accumulate(long vecid, int[] pairs);
 
+    public void startListening();
+
+    public void stopListening();
+
     public void addListener(VectorSetListener listener);
 
     public void rescore(String key, long vecid, float[] vector, Recommendation rec);

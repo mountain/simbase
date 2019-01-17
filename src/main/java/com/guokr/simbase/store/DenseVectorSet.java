@@ -324,6 +324,16 @@ public class DenseVectorSet implements VectorSet, BasisListener {
     }
 
     @Override
+    public void startListening() {
+        this.listening = true;
+    }
+
+    @Override
+    public void stopListening() {
+        this.listening = false;
+    }
+
+    @Override
     public void addListener(VectorSetListener listener) {
         listeners.add(listener);
     }

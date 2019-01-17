@@ -174,7 +174,12 @@ public class SimBasis {
         this.vectorSets.get(vkey).expireAt(vecid, ttl * 1000 + new Date().getTime());
     }
 
-    public void vacc(String vkey, long vecid, float[] distr) {
+    public void vacc(String vkey, long vecid, float[] distr, boolean listening) {
+        if (listening) {
+            this.vectorSets.get(vkey).startListening();
+        } else {
+            this.vectorSets.get(vkey).stopListening();
+        }
         this.vectorSets.get(vkey).accumulate(vecid, distr);
     }
 

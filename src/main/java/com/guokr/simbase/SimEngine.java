@@ -66,7 +66,7 @@ public interface SimEngine {
 
     public void rrec(SimCallback callback, String vkeySource, long vecid, String vkeyTarget);
 
-    public void xacc(SimCallback callback, String vkeyTarget, long vecidTarget, String vkeyOperand, long vecidOperand);
+    public void xacc(SimCallback callback, String vkeyTarget, long vecidTarget, String vkeyOperand, long[] vecidOperand);
 
     public void xprd(SimCallback callback, String vkeyTarget, long vecidTarget, String vkeyOperand, long[] vecidOperands);
 
