@@ -147,7 +147,7 @@ public class DenseCosBasicTests {
     @Test
     public void testVacc() throws Throwable {
         execCmd(vacc("vtest", 5, 0.1f, 0.9f, 0f), ok(), //
-                vget("vtest", 5), floatList(0.2f, 1.79f, 0.01f) //
+                vget("vtest", 5), floatList(0.09999995f, 0.8000001f, 0.09999998f) //
         );
     }
 
