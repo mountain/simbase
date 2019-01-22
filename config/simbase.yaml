@@ -18,8 +18,8 @@ defaults:
     vectorSetType: dense
     maxlimits: 20
   dense:
-    accumuFactor: 0.98
+    accumuFactor: 10.0
     sparseFactor: 1024
   sparse:
-    accumuFactor: 0.98
+    accumuFactor: 10.0
     sparseFactor: 1024
