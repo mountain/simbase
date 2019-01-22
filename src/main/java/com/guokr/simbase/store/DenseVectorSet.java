@@ -264,7 +264,7 @@ public class DenseVectorSet implements VectorSet, BasisListener {
                 int cursor = indexer.get(vecid);
                 for (float newval : vector) {
                     float oldval = data.get(cursor);
-                    float val = oldval *  + newval;
+                    float val = oldval + newval;
                     data.set(cursor, val);
                     if (max < val) {
                         max = val;
