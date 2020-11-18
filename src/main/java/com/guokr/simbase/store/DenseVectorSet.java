@@ -243,7 +243,7 @@ public class DenseVectorSet implements VectorSet, BasisListener {
         if (!indexer.containsKey(vecid)) {
             add(vecid, vector);
         } else {
-            float max = Float.NEGATIVE_INFINITY;
+            float sum = 0;
             if (lengths.get(vecid) != vector.length) {
                 float[] oldvec = get(vecid);
                 remove(vecid);
@@ -253,31 +253,27 @@ public class DenseVectorSet implements VectorSet, BasisListener {
                 int cursor = 0;
                 for (float newval : vector) {
                     float oldval = oldvec[cursor];
-                    float val = oldval + newval;
+                    float val = oldval * accumuFactor + newval * (1 - accumuFactor);
                     data.add(val);
-                    if (max < val) {
-                        max = val;
-                    }
+                    sum += val;
                     cursor++;
                 }
             } else {
                 int cursor = indexer.get(vecid);
                 for (float newval : vector) {
                     float oldval = data.get(cursor);
-                    float val = oldval + newval;
+                    float val = oldval * accumuFactor + newval * (1 - accumuFactor);
                     data.set(cursor, val);
-                    if (max < val) {
-                        max = val;
-                    }
+                    sum += val;
                     cursor++;
                 }
             }
 
-            if (max > accumuFactor) {
+            if (sum > 0) {
                 int cursor = indexer.get(vecid);
                 int len = lengths.get(vecid);
                 for (int i = 0; i < len; i++) {
-                    data.set(cursor + i, data.get(cursor + i) * accumuFactor / max);
+                    data.set(cursor + i, data.get(cursor + i) / sum);
                 }
             }
 
