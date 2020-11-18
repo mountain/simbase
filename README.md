@@ -8,11 +8,11 @@ set or between two vector sets.
 Release
 --------
 
-Current version is [v0.1.0-beta1](https://github.com/guokr/simbase/releases/tag/v0.1.0-beta1).
+Current version is [v0.1.0](https://github.com/mountain/simbase/releases/tag/v0.1.0).
 
 Build status
 -------------
-[![Build Status](https://secure.travis-ci.org/guokr/simbase.png)](http://travis-ci.org/guokr/simbase)
+[![Build Status](https://secure.travis-ci.org/mountain/simbase.png)](http://travis-ci.org/mountain/simbase)
 
 Concepts
 --------
