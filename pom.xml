@@ -22,6 +22,10 @@
     <developerConnection>scm:git:ssh://git@github.com/mountain/simbase.git</developerConnection>
     <tag>fc490ac0fae789a36429b7d875b464a09f3dd179</tag>
   </scm>
+  <properties>
+    <maven.compiler.source>14</maven.compiler.source>
+    <maven.compiler.target>14</maven.compiler.target>
+  </properties>
   <build>
     <sourceDirectory>src/main/clojure</sourceDirectory>
     <testSourceDirectory>src/tests/java</testSourceDirectory>
