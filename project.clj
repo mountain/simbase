@@ -31,7 +31,7 @@
                      :all (constantly true)}
     :compile-path "target/classes"
     :target-path "target/"
-    :javac-options ["--release" "14"]
+    :javac-options ["--release" "15"]
     :omit-source true
     :jvm-opts ["-Xmx1g"]
 
